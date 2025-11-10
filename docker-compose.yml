@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "127.0.0.1:4566:4566"      # Porta principal para APIs
+      - "127.0.0.1:4510-4559:4510-4559" # Para serviços externos
+    environment:
+      - SERVICES=apigateway,lambda,dynamodb,sqs,s3,sns
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAMBDA_EXECUTOR=docker
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./lambda_criar_pedido:/etc/localstack/init/lambda_criar_pedido
+      - ./lambda_processar_pedido:/etc/localstack/init/lambda_processar_pedido
