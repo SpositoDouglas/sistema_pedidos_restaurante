@@ -1,6 +1,10 @@
 set -e
+ENDPOINT_URL="${ENDPOINT_URL:-http://localhost:4566}"
 
-alias awslocal="aws --endpoint-url=http://localhost:4566 --region us-east-1"
+echo "Usando endpoint: $ENDPOINT_URL"
+
+# Ajustamos o alias para usar a variável
+alias awslocal="aws --endpoint-url=$ENDPOINT_URL --region us-east-1"
 
 echo "=== 1. Criando Recursos Básicos (Dynamo, SQS, S3, SNS) ==="
 

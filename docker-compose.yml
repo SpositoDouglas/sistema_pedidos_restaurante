@@ -15,3 +15,25 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - ./lambda_criar_pedido:/etc/localstack/init/lambda_criar_pedido
       - ./lambda_processar_pedido:/etc/localstack/init/lambda_processar_pedido
+      - .:/app 
+
+  setup-resources:
+    image: amazon/aws-cli
+    depends_on:
+      - localstack
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - ENDPOINT_URL=http://localstack:4566
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: >
+      /bin/sh -c "
+        yum install -y zip && 
+        echo 'Aguardando LocalStack...' && 
+        sleep 10 && 
+        chmod +x setup.sh && 
+        ./setup.sh
+      "

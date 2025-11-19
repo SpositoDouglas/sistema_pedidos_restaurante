@@ -2,9 +2,7 @@ import json
 import boto3
 import os
 
-
 LOCALSTACK_ENDPOINT = 'http://localstack:4566'
-
 
 if os.environ.get('AWS_LAMBDA_RUNTIME_API'):
     s3 = boto3.client('s3', endpoint_url=LOCALSTACK_ENDPOINT)
@@ -15,7 +13,6 @@ else:
     sns = boto3.client('sns')
     dynamodb = boto3.resource('dynamodb')
 
-
 BUCKET_NAME = "pedidos-comprovantes"
 TOPIC_ARN = "arn:aws:sns:us-east-1:000000000000:PedidosConcluidos"
 TABLE_NAME = "Pedidos"
@@ -25,13 +22,13 @@ def lambda_handler(event, context):
     
     for record in event.get('Records', []):
         try:
+
             message_body = json.loads(record.get('body', '{}'))
             order_id = message_body.get('order_id')
 
             if not order_id:
                 continue
 
-            print(f"Iniciando processamento do pedido: {order_id}")
 
             response = TABLE.get_item(Key={'id': order_id})
             item = response.get('Item')
@@ -40,6 +37,7 @@ def lambda_handler(event, context):
                 print(f"Erro: Pedido {order_id} não encontrado no banco.")
                 continue
             
+
             cliente = item.get('cliente', 'Desconhecido')
             mesa = item.get('mesa', 'N/A')
             lista_itens = ", ".join(item.get('itens', [])) 
@@ -53,6 +51,7 @@ def lambda_handler(event, context):
                 f"====================="
             )
 
+
             s3.put_object(
                 Bucket=BUCKET_NAME,
                 Key=f"comprovante-{order_id}.txt",
@@ -60,13 +59,13 @@ def lambda_handler(event, context):
                 ContentType='text/plain'
             )
 
+
             TABLE.update_item(
                 Key={'id': order_id},
                 UpdateExpression="SET #status_pedido = :novo_status",
                 ExpressionAttributeNames={'#status_pedido': 'status'},
                 ExpressionAttributeValues={':novo_status': 'CONCLUIDO'}
             )
-            print(f"Status atualizado para CONCLUIDO no DynamoDB.")
 
 
             sns.publish(
@@ -74,7 +73,13 @@ def lambda_handler(event, context):
                 Message=print_do_pedido,
                 Subject="Pedido Pronto para Retirada!"
             )
-            print(f"Notificação SNS enviada com detalhes do pedido.")
+
+ 
+            print("\n" + "#"*40)
+            print("      [SNS] NOTIFICAÇÃO ENVIADA      ")
+            print("#"*40)
+            print(print_do_pedido)
+            print("#"*40 + "\n")
 
         except Exception as e:
             print(f"Erro ao processar mensagem: {e}")
